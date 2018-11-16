@@ -1,0 +1,57 @@
+[
+	{
+		"pdt_id": 1,
+		"category_id": 0,
+		"category_name": "热销",
+		"name": "辣椒炒肉",
+		"price": 12.5,
+		"stock": 100,
+		"sale_num": 15,
+		"likes": 8
+	}, {
+		"pdt_id": 2,
+		"category_id": 1,
+		"category_name": "类别1",
+		"name": "清炒莴笋丝",
+		"price": 11,
+		"stock": 100,
+		"sale_num": 5,
+		"likes": 1
+	}, {
+		"pdt_id": 3,
+		"category_id": 2,
+		"category_name": "类别2",
+		"name": "粉蒸肉",
+		"price": 18,
+		"stock": 100,
+		"sale_num": 25,
+		"likes": 12
+	}, {
+		"pdt_id": 4,
+		"category_id": 3,
+		"category_name": "类别3",
+		"name": "西红柿炒鸡蛋",
+		"price": 12,
+		"stock": 100,
+		"sale_num": 65,
+		"likes": 23
+	}, {
+		"pdt_id": 5,
+		"category_id": 4,
+		"category_name": "类别4",
+		"name": "萝卜炖牛腩",
+		"price": 23,
+		"stock": 100,
+		"sale_num": 19,
+		"likes": 9
+	}, {
+		"pdt_id": 5,
+		"category_id": 5,
+		"category_name": "类别5",
+		"name": "外婆菜炒肉",
+		"price": 14,
+		"stock": 100,
+		"sale_num": 17,
+		"likes": 14
+	}
+]
