@@ -12,7 +12,8 @@ export default {
 	[ADD_CART](state, {
 		pdt_id,
 		category_id,
-		price
+		price,
+		name
 	}) {
 		let cart = state.cartList;
 		if (cart[pdt_id]) {
@@ -22,6 +23,7 @@ export default {
 				"num" : 1,
 				"pdt_id" : pdt_id,
 				"category_id" : category_id,
+				"name": name,
 				"price": price
 			};
 		}
@@ -57,7 +59,11 @@ export default {
 	},
 	//清空当前商品的购物车信息
 	[CLEAR_CART](state, pdt_id) {
-		delete state.cartList[pdt_id];
+		if(pdt_id == "ALL"){
+			state.cartList = {};
+		} else {
+			delete state.cartList[pdt_id];
+		}
 		state.cartList = {...state.cartList};
 		setStore('buyCart', state.cartList);
 	}
