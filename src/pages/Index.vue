@@ -14,13 +14,13 @@
 			<div class="flex-box body">
 				<div class="menu flex1">
 					<ul>
-						<li v-for="(menu,idx) in typeList" :class="menu.type==activeMenuIdx?'active':''" @click="switchType(menu)" :key="idx">
-							{{menu.typeName}}
+						<li v-for="(category, idx) in categoryList" :class="isActive(category.category_id)" @click="switchType(category)" :key="idx">
+							{{category.category_name}}
 						</li>
 					</ul>
 				</div>
 				<div class="content">
-					<div class="nav-title">{{categoryType}}</div>
+					<div class="nav-title">{{curCategoryName}}</div>
 					<div class="pdt-list" @scroll="scrollEvent()" id="pdtList" :class="overflowHidden">
 						<pdt-item v-for="(item, idx) in dataList" :item="item" :key="idx" :index="idx"></pdt-item>
 					</div>
@@ -40,29 +40,32 @@
 						<i>{{cartObj.totalPrice}}</i>
 						<small> 元</small>
 					</p>
-					<!--<span>餐位费3元</span>-->
 				</div>
 				<div class="flex3">
-					<a href="javascript:void(0)" class="submit-btn" :class="isDisable">去结算</a>
+					<router-link :to="'/order/buy'" class="submit-btn" :class="isDisable">去结算</router-link>
+					<!--<a href="javascript:void(0)" class="submit-btn" :class="isDisable">去结算</a>-->
 				</div>
 			</div>
 		</div>
-		<div class="cart-list" v-show="this.cartObj.totalNum > 0 && this.isShowCartList">
-			<div class="cover" @click="isShowCartList = !isShowCartList"></div>
-			<div class="cart-container">
-				<div class="cart-title">
-					<div><span @click="clearCart">清空购物车</span></div>
+		<transition name="fade">
+			<div class="cart-list" v-show="this.cartObj.totalNum > 0 && this.isShowCartList">
+				<div class="cover" @click="isShowCartList = !isShowCartList"></div>
+				<div class="cart-container">
+					<div class="cart-title">
+						<div><span @click="clearCart">清空购物车</span></div>
+					</div>
+					<ul>
+						<li v-for="(item, idx) in carts" :key="idx" class="flex-box">
+							<div class="flex3">{{item.name}}</div>
+							<div class="flex1">￥{{item.price * item.num}}</div>
+							<buy-cart :item="item" class="flex2 txt-right"></buy-cart>
+						</li>
+					</ul>
 				</div>
-				<ul>
-					<li v-for="(item, idx) in dataList" :key="idx" class="flex-box" v-if="item.num > 0">
-						<div class="flex3">{{item.name}}</div>
-						<div class="flex1">￥{{item.price * item.num}}</div>
-						<buy-cart :item="item" class="flex2 txt-right"></buy-cart>
-					</li>
-				</ul>
 			</div>
-		</div>
+		</transition>
 		<div class="fly-item" id="flyItem"><img src="../assets/img/icon-goods.png"></div>
+		<div class="sus-box"><router-link :to="'/order/detail/:1'">我的点餐</router-link></div>  
 	</section>
 </template>
 
@@ -70,8 +73,8 @@
 	import PdtItem from '@/components/PdtItem'
 	import buyCart from '@/components/BuyCart'
 	import { animateScroll } from '../js/utils'
-	import { pdtList, typeList } from '../js/json'
 	import { mapState } from 'vuex';
+	import { INIT_BUYCART, CLEAR_CART } from '../store/mutation-types.js'
 	export default {
 		name: 'Index',
 		components: {
@@ -80,47 +83,51 @@
 		},
 		data() {
 			return {
-				activeMenuIdx: 0,
-				typeList: typeList,
+				categoryList: [],
+				curCategoryId: 0,
 				dataList: [],
-				categoryType: "热销",
+				curCategoryName: "热销",
 				scrollTimer: null,
 				lastScrollTime: 0,
 				isShowCartList: false
 			}
 		},
 		mounted() {
-			let list = [];
-			let typeObj = {};
-			pdtList.forEach(function(item) {
-				if(!typeObj[item.type]) {
-					item.isNewType = true;
-					typeObj[item.type] = true;
-				}
-				list.push(item);
-			})
-			this.dataList = list;
+			let that = this;
+			this.$http.get('static/category.json').then(function(result) {
+				that.categoryList = result.data;
+			});
+			this.$http.get('static/pdtlist.json').then(function(result) {
+				var pdtList = result.data;
+				let list = [];
+				let typeObj = {};
+				pdtList.forEach(function(item) {
+					if(!typeObj[item.category_id]) {
+						item.isNewType = true;
+						typeObj[item.category_id] = true;
+					}
+					list.push(item);
+				})
+				that.dataList = list;
+			});
+			this.$store.commit("INIT_BUYCART");
 		},
 		methods: {
-			switchType(menu) {
+			switchType(category) {
 				let that = this;
 				let doc = document.getElementById("pdtList");
 				let cItemList = doc.querySelectorAll(".category-title");
 				for(let i = 0; i < cItemList.length; i++) {
 					let curItem = cItemList[i];
-					if(curItem.getAttribute("data-type") == menu.type) {
+					if(curItem.getAttribute("data-category_id") == category.category_id) {
 						let scrollTop = i == 0 ? 0 : (curItem.offsetTop + 36);
 						animateScroll(doc, scrollTop);
 						break;
 					}
 				}
 			},
-			clearCart(){
-				this.dataList.forEach(function(item) {
-					if(item.num > 0) {
-						item.num = 0;
-					}
-				})
+			clearCart() {
+				this.$store.commit(CLEAR_CART, 'ALL');
 			},
 			scrollEvent() {
 				let that = this,
@@ -135,7 +142,7 @@
 				if(that.lastScrollTime) {
 					let diff = 200 - (nowTime - this.lastScrollTime);
 					if(diff >= 0) {
-						that.scrollTimer = setTimeout(function(){
+						that.scrollTimer = setTimeout(function() {
 							that.execScroll(et.target);
 						}, diff);
 					} else {
@@ -153,25 +160,27 @@
 					let curItem = cItem[i];
 					if(curItem.offsetTop > doc.scrollTop - 36) {
 						var temp = i == 0 ? curItem : cItem[i - 1];
-						that.categoryType = temp.getAttribute("data-type-name");
-						that.activeMenuIdx = temp.getAttribute("data-type");
+						that.curCategoryName = temp.getAttribute("data-category_name");
+						that.curCategoryId = temp.getAttribute("data-category_id");
 						break;
 					}
 				}
-				if(doc.scrollTop == (doc.scrollHeight - doc.offsetHeight)){
+				if(doc.scrollTop == (doc.scrollHeight - doc.offsetHeight)) {
 					doc.scrollTop = doc.scrollTop - 1;
 				}
 			}
 		},
 		computed: {
 			...mapState({
+				'cartList': (state) => state.cartList
 			}),
 			cartObj() {
 				let rst = {
 					totalNum: 0,
 					totalPrice: 0
 				};
-				this.dataList.forEach(function(item) {
+				let list = Object.values(this.cartList);
+				list.forEach(function(item) {
 					if(item.num > 0) {
 						rst.totalNum += item.num;
 						rst.totalPrice += item.price * item.num;
@@ -179,12 +188,20 @@
 				})
 				return rst;
 			},
-			isDisable(){
+			isDisable() {
 				this.isShowCartList = this.cartObj.totalNum == 0 ? false : this.isShowCartList;
 				return this.cartObj.totalNum > 0 ? '' : 'disabled';
 			},
-			overflowHidden(){
-				return (this.cartObj.totalNum == 0 || !this.isShowCartList) ? '' : 'overflow-hide';
+			overflowHidden() {
+				return(this.cartObj.totalNum == 0 || !this.isShowCartList) ? '' : 'overflow-hide';
+			},
+			isActive() {
+				return function(category_id) {
+					return category_id == this.curCategoryId ? 'active' : '';
+				}
+			},
+			carts() {
+				return Object.values(this.cartList);
 			}
 		}
 	}
@@ -214,10 +231,6 @@
 		border-radius: 0.05rem;
 	}
 	
-	.shop-msg {
-		/*height: 100%;*/
-	}
-	
 	.body {
 		background: #FFF;
 		height: 100%;
@@ -231,13 +244,13 @@
 		position: relative;
 	}
 	
-	.menu ul{
+	.menu ul {
 		position: absolute;
-	    left: 0;
-	    right: 0;
-	    top: 0;
-	    bottom: 0.54rem;
-	    overflow-y: auto;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0.54rem;
+		overflow-y: auto;
 	}
 	
 	.menu ul li {
@@ -353,14 +366,7 @@
 		background: #666;
 		color: #999;
 	}
-	.cart-list {
-		-webkit-animation-name: fadeIn;
-  		animation-name: fadeIn;
-		-webkit-animation-duration: 350ms;
-		animation-duration: 350ms;
-		-webkit-animation-fill-mode: both;
-		animation-fill-mode: both;
-	}
+	
 	.cart-list .cart-container {
 		position: fixed;
 		left: 0;
@@ -371,16 +377,16 @@
 		color: #666;
 		transition: height 500ms;
 		-webkit-animation-name: fadeInUp;
-  		animation-name: fadeInUp;
+		animation-name: fadeInUp;
 		-webkit-animation-duration: 350ms;
 		animation-duration: 350ms;
 		-webkit-animation-fill-mode: both;
 		animation-fill-mode: both;
 	}
 	
-	.cart-list ul{
+	.cart-list ul {
 		max-height: 3rem;
-    	overflow: auto;
+		overflow: auto;
 	}
 	
 	.cart-list ul li {
@@ -397,7 +403,8 @@
 		background: rgba(0, 0, 0, 0.5);
 		z-index: 97;
 	}
-	.cart-title{
+	
+	.cart-title {
 		padding: 0 0.15rem 0 0 !important;
 		text-align: right;
 		line-height: 0.36rem;
@@ -405,11 +412,13 @@
 		font-size: 0.12rem;
 		background: #eaeaea;
 	}
-	.cart-title span{
+	
+	.cart-title span {
 		padding-left: 0.18rem;
 		position: relative;
 	}
-	.cart-title span:before{
+	
+	.cart-title span:before {
 		content: '';
 		position: absolute;
 		top: 0;
@@ -417,25 +426,45 @@
 		width: 0.16rem;
 		height: 0.16rem;
 		background: url(../assets/img/clear.png) center no-repeat;
-		background-size: 0.12rem ;
+		background-size: 0.12rem;
 	}
-	.overflow-hide{
+	
+	.overflow-hide {
 		overflow-y: hidden;
 	}
+	
 	.fly-item,
-	.fly-item > img {
-	    position: absolute;
-	    transition: transform .4s;
-	    width: 0.24rem;
-	    height: 0.24rem;
+	.fly-item>img {
+		position: fixed;
+		transition: transform .4s;
+		width: 0.24rem;
+		height: 0.24rem;
+		z-index: 101;
 	}
+	
 	.fly-item {
 		display: none;
-	    margin: -0.12rem 0 0 -0.12rem;
-	    transition-timing-function: linear;
-	    opacity: .5;
+		margin: -0.12rem 0 0 -0.12rem;
+		transition-timing-function: linear;
+		opacity: 0.7;
 	}
-	.fly-item > img {
-	    transition-timing-function: cubic-bezier(.55,0,.85,.36);
+	
+	.fly-item>img {
+		transition-timing-function: cubic-bezier(.55, 0, .85, .36);
+	}
+	
+	.sus-box{
+		position: fixed;
+		left: 0.5rem;
+		bottom: 1rem;
+		z-index: 103;
+		cursor: pointer;
+		background: rgba(0,0,0, 0.7);
+		padding: 0.08rem 0.1rem;
+		border-radius: 0.17rem;
+	}
+	.sus-box a{
+		color: #FFF;
+		font-size: 0.12rem;
 	}
 </style>

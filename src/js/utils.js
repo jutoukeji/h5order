@@ -30,14 +30,15 @@ export const animateScroll = (doc, position, callBack) => {
 			// 目标滚动位置
 			scrollTop = scrollTop + distance / 10;
 			if(Math.abs(distance) < 1) {
-				doc.scrollTo(0, position);
+//				doc.scrollTo(0, position);
+				doc.scrollTop = position;
 				if(typeof(callBack) == 'function') callBack();
 			} else {
-				doc.scrollTo(0, scrollTop);
+				doc.scrollTop = scrollTop;
+//				doc.scrollTo(0, scrollTop);
 				requestAnimationFrame(step);
 			}
 		}
-
 		step();
 	} else {
 		// 新特性只需要在滚动元素上面添加 scroll-behavior: smooth; 即可

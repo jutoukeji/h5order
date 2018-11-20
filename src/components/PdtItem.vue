@@ -1,9 +1,9 @@
 <template>
 	<div>
-		<div v-if="item.isNewType && item.type != 0" class="category-title" 
-			:data-type="item.type" :data-type-name="item.typeName">{{item.typeName}}</div>
-		<div v-if="item.isNewType && item.type == 0" class="category-title" 
-			:data-type="item.type" :data-type-name="item.typeName"></div>
+		<div v-if="item.isNewType && item.category_id != 0" class="category-title" 
+			:data-category_id="item.category_id" :data-category_name="item.category_name">{{item.category_name}}</div>
+		<div v-if="item.isNewType && item.category_id == 0" class="category-title" 
+			:data-category_id="item.category_id" :data-category_name="item.category_name"></div>
 		<div class="flex-box item-box">
 			<div class="img-box">
 				<!--<img src="../assets/img/logo.png">-->
@@ -11,12 +11,10 @@
 			</div>
 			<div class="content flex1">
 				<p class="name">{{item.name}}</p>
-				<p class="small">
-					<small>
-			          <em>月售{{item.monthSale}}</em>
-			          <em>赞{{item.dznum}}</em>
-			        </small>
-				</p>
+				<small>
+		          <em>月售{{item.sale_num}}</em>
+		          <em>赞{{item.likes}}</em>
+		        </small>
 				<div class="bottom flex-box">
 					<span class="pirce flex1">￥{{item.price}}</span>
 					<buy-cart :item="item"></buy-cart>
@@ -87,13 +85,9 @@
 		color: #000;
 	}
 	
-	.small {
-		font-size: 0.12rem;
-	}
-	
-	.small em:first-child {
+	.content small em:first-child {
 		display: inline-block;
-		width: 0.5rem;
+		width: 0.8rem;
 	}
 	
 	.bottom {

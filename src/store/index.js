@@ -7,7 +7,7 @@ import getters from './getters'
 Vue.use(vuex)
 
 const state = {
-	cartList: []
+	cartList: {}
 }
 
 export default new vuex.Store({
